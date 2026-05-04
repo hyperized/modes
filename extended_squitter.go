@@ -128,5 +128,9 @@ func decodeMEPayload(typeCode TypeCode, mePayload []byte) (Message, error) {
 		return decodeIdentification(typeCode, mePayload), nil
 	}
 
+	if typeCode == 19 { //nolint:mnd // TC 19 = Airborne Velocity.
+		return decodeVelocity(mePayload), nil
+	}
+
 	return nil, fmt.Errorf("%w: TC %d", errUnsupportedTypeCode, typeCode)
 }

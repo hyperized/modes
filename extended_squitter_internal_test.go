@@ -154,9 +154,9 @@ func TestDecodeExtendedSquitterDF18Accepted(t *testing.T) {
 func TestDecodeExtendedSquitterUnsupportedTC(t *testing.T) {
 	t.Parallel()
 
-	// TC 19 (velocity) — decoder lands later. Structural fields
-	// must still be populated even when ME decoding fails.
-	mePayload := [7]byte{19 << 3, 0, 0, 0, 0, 0, 0}
+	// TC 23 (test message) — decoder lands later. Structural
+	// fields must still be populated even when ME decoding fails.
+	mePayload := [7]byte{23 << 3, 0, 0, 0, 0, 0, 0}
 	frame := makeESFrame(DFExtendedSquitter, 0, 0x123456, mePayload)
 
 	squitter, err := DecodeExtendedSquitter(frame)
@@ -169,8 +169,8 @@ func TestDecodeExtendedSquitterUnsupportedTC(t *testing.T) {
 			squitter.ICAO)
 	}
 
-	if squitter.TypeCode != 19 {
-		t.Errorf("TypeCode = %d, want 19", squitter.TypeCode)
+	if squitter.TypeCode != 23 {
+		t.Errorf("TypeCode = %d, want 23", squitter.TypeCode)
 	}
 }
 
