@@ -37,6 +37,11 @@ linters:
           arguments: [ 20 ]
         - name: cyclomatic
           arguments: [ 15 ]
+        - name: max-public-structs
+          # Mode S has one decoded-message struct per Downlink Format (and
+          # ME type code, BDS register, …) — the spec is naturally rich
+          # in named types, so the default of 5 forces unrelated splits.
+          arguments: [ 50 ]
     mnd:
       ignored-numbers: [ "0", "1", "2", "3" ]
     funlen:
