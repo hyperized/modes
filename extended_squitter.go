@@ -128,6 +128,10 @@ func decodeMEPayload(typeCode TypeCode, mePayload []byte) (Message, error) {
 		return decodeIdentification(typeCode, mePayload), nil
 	}
 
+	if (typeCode >= 9 && typeCode <= 18) || (typeCode >= 20 && typeCode <= 22) { //nolint:mnd // TC ranges per spec.
+		return decodeAirbornePosition(typeCode, mePayload), nil
+	}
+
 	if typeCode == 19 { //nolint:mnd // TC 19 = Airborne Velocity.
 		return decodeVelocity(mePayload), nil
 	}
