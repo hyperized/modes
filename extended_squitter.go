@@ -140,5 +140,17 @@ func decodeMEPayload(typeCode TypeCode, mePayload []byte) (Message, error) {
 		return decodeVelocity(mePayload), nil
 	}
 
+	if typeCode == 28 { //nolint:mnd // TC 28 = Aircraft Status (emergency / TCAS RA).
+		return decodeAircraftStatus(mePayload), nil
+	}
+
+	if typeCode == 29 { //nolint:mnd // TC 29 = Target State and Status.
+		return decodeTargetState(mePayload), nil
+	}
+
+	if typeCode == 31 { //nolint:mnd // TC 31 = Aircraft Operational Status.
+		return decodeOperationalStatus(mePayload), nil
+	}
+
 	return nil, fmt.Errorf("%w: TC %d", errUnsupportedTypeCode, typeCode)
 }
