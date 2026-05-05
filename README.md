@@ -10,6 +10,8 @@ The package is spec-faithful, allocation-free on the hot path, and has zero thir
 
 Working coverage of every Downlink Format defined in the spec. The decoded surface is broad rather than deep — every DF and most ME Type Codes have a typed decoded message; the long tail of subtype-specific sub-decoders (TC 29 selected-altitude sub-decoding, TC 31 airborne / surface sub-fields, the dozen-plus Comm-B BDS registers beyond BDS 2,0) is being filled in commit-by-commit as downstream consumers need them. Real-frame regression vectors land alongside as captured ADS-B replay data becomes available.
 
+Tests: 100 % statement coverage, lint clean against `golangci-lint v2.12` (`default: all`, `revive` enable-all-rules at line-length 120).
+
 ## Coverage
 
 | Downlink Format | Decoder                              | Notes |

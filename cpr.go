@@ -66,6 +66,19 @@ const (
 	dLatOdd  = 360.0 / 59.0 // ≈ 6.1016949152542375
 )
 
+// positiveMod returns a non-negative remainder of value/modulus.
+// Go's math.Mod follows C convention and returns a negative
+// remainder for negative dividends — the CPR algorithm requires
+// the always-positive variant the spec assumes.
+func positiveMod(value, modulus float64) float64 {
+	result := math.Mod(value, modulus)
+	if result < 0 {
+		result += modulus
+	}
+
+	return result
+}
+
 // DecodeCPRGlobal does the globally-unambiguous decode from a
 // pair of CPR positions captured close together in time. The
 // mostRecent argument identifies which of the two arrived later;
@@ -92,13 +105,13 @@ func DecodeCPRGlobal(even, odd CPRPosition, mostRecent CPRFormat) (latitude, lon
 	// Solve for the latitude index shared by both frames.
 	latIndex := math.Floor(59*latEven - 60*latOdd + 0.5) //nolint:mnd // CPR §A.1.7.10 constants.
 
-	latitudeEven := dLatEven * (math.Mod(latIndex, 60) + latEven) //nolint:mnd // 60 zones in the even grid.
-	if latitudeEven >= 270 {                                      //nolint:mnd // CPR wrap threshold.
+	latitudeEven := dLatEven * (positiveMod(latIndex, 60) + latEven) //nolint:mnd // 60 zones in the even grid.
+	if latitudeEven >= 270 {                                         //nolint:mnd // CPR wrap threshold.
 		latitudeEven -= 360 //nolint:mnd // wrap to (-90, +90].
 	}
 
-	latitudeOdd := dLatOdd * (math.Mod(latIndex, 59) + latOdd) //nolint:mnd // 59 zones in the odd grid.
-	if latitudeOdd >= 270 {                                    //nolint:mnd // CPR wrap threshold.
+	latitudeOdd := dLatOdd * (positiveMod(latIndex, 59) + latOdd) //nolint:mnd // 59 zones in the odd grid.
+	if latitudeOdd >= 270 {                                       //nolint:mnd // CPR wrap threshold.
 		latitudeOdd -= 360 //nolint:mnd // wrap to (-90, +90].
 	}
 
@@ -135,11 +148,11 @@ func decodeLongitudeGlobal(even, odd CPRPosition, latitude float64, mostRecent C
 	case CPRFormatEven:
 		niEven := math.Max(float64(zoneCount), 1)
 
-		return (360.0 / niEven) * (math.Mod(lonIndex, niEven) + longEven) //nolint:mnd
+		return (360.0 / niEven) * (positiveMod(lonIndex, niEven) + longEven) //nolint:mnd
 	case CPRFormatOdd:
 		niOdd := math.Max(float64(zoneCount-1), 1)
 
-		return (360.0 / niOdd) * (math.Mod(lonIndex, niOdd) + longOdd) //nolint:mnd
+		return (360.0 / niOdd) * (positiveMod(lonIndex, niOdd) + longOdd) //nolint:mnd
 	}
 
 	return 0
@@ -164,7 +177,7 @@ func DecodeCPRLocal(pos CPRPosition, refLat, refLon float64) (latitude, longitud
 
 	latCPR := float64(pos.Latitude) / cprResolution
 	jPart := math.Floor(refLat/dLat) +
-		math.Floor(0.5+math.Mod(refLat, dLat)/dLat-latCPR) //nolint:mnd
+		math.Floor(0.5+positiveMod(refLat, dLat)/dLat-latCPR) //nolint:mnd
 
 	latitude = dLat * (jPart + latCPR)
 
@@ -179,7 +192,7 @@ func DecodeCPRLocal(pos CPRPosition, refLat, refLon float64) (latitude, longitud
 
 	longCPR := float64(pos.Longitude) / cprResolution
 	mPart := math.Floor(refLon/dLon) +
-		math.Floor(0.5+math.Mod(refLon, dLon)/dLon-longCPR) //nolint:mnd
+		math.Floor(0.5+positiveMod(refLon, dLon)/dLon-longCPR) //nolint:mnd
 
 	longitude = dLon * (mPart + longCPR)
 

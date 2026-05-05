@@ -64,7 +64,7 @@ type AirbornePositionMessage struct {
 	IsGNSSAltitude bool
 }
 
-func (AirbornePositionMessage) isModesMessage() {}
+func (msg AirbornePositionMessage) isModesMessage() { _ = msg }
 
 // errGNSSAltitudeUnsupported marks TC 20..22 GNSS-altitude
 // encodings the decoder doesn't yet split per subtype.

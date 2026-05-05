@@ -64,7 +64,7 @@ type AircraftStatusMessage struct {
 	RawRAPayload [7]byte
 }
 
-func (AircraftStatusMessage) isModesMessage() {}
+func (msg AircraftStatusMessage) isModesMessage() { _ = msg }
 
 // TargetStateMessage is the decoded payload of a TC 29 frame.
 // Subtype 1 (DO-260B) carries selected altitude, baro setting,
@@ -76,7 +76,7 @@ type TargetStateMessage struct {
 	Raw     [7]byte
 }
 
-func (TargetStateMessage) isModesMessage() {}
+func (msg TargetStateMessage) isModesMessage() { _ = msg }
 
 // OperationalStatusMessage is the decoded payload of a TC 31
 // frame. Subtype 0 = airborne, subtype 1 = surface; both carry
@@ -88,7 +88,7 @@ type OperationalStatusMessage struct {
 	Raw     [7]byte
 }
 
-func (OperationalStatusMessage) isModesMessage() {}
+func (msg OperationalStatusMessage) isModesMessage() { _ = msg }
 
 // decodeAircraftStatus parses a TC 28 ME payload. Subtype 1
 // gets full decoding; other subtypes (TCAS RA broadcast,

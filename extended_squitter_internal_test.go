@@ -9,6 +9,8 @@ import (
 // CA, ICAO, and 7-byte ME payload. The PI tail is filled by
 // AppendCRC24 (DF 17/18 use plain CRC parity, so the synthesised
 // frame self-cancels — matching the wire reality).
+//
+//nolint:unparam // category currently 0 in tests; kept for completeness so callers can exercise CA bits.
 func makeESFrame(downlinkFormat DownlinkFormat, category uint8, icao ICAO, mePayload [7]byte) Frame {
 	const (
 		dfShift   = 3

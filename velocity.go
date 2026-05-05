@@ -77,7 +77,7 @@ type AirborneVelocityMessage struct {
 	GNSSMinusBaroAvailable bool
 }
 
-func (AirborneVelocityMessage) isModesMessage() {}
+func (msg AirborneVelocityMessage) isModesMessage() { _ = msg }
 
 // decodeVelocity parses a TC 19 ME payload. mePayload must be 7
 // bytes (the ES dispatcher enforces that). For Subtype 1 the

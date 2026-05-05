@@ -38,28 +38,25 @@ var nlBoundaries = [...]float64{
 }
 
 // cprNL returns the number of longitude zones at latitude.
-// Range: 1 (at the poles) to 59 (at the equator).
+// Range: 1 (at the poles) to 59 (at the equator). The loop's
+// fallthrough naturally returns 1 for |latitude| ≥ 87° because
+// the last entry in the boundary table is 87.0 — no separate
+// polar-cutoff branch needed.
 func cprNL(latitude float64) int {
-	const polarCutoff = 87.0
-
 	abs := math.Abs(latitude)
 
-	switch {
-	case abs >= polarCutoff:
-		return 1
-	case abs < nlBoundaries[0]:
+	if abs < nlBoundaries[0] {
 		return 59 //nolint:mnd // 59 zones at the equator per spec table.
 	}
 
 	// Binary search would be marginally faster but the table is
-	// 58 entries; a linear scan is plenty fast and reads more
-	// like the spec's "find the highest breakpoint below
-	// |latitude|" definition.
+	// 58 entries; a linear scan reads more like the spec's
+	// "find the highest breakpoint below |latitude|" definition.
 	for index, breakpoint := range nlBoundaries {
 		if abs < breakpoint {
 			return 59 - index //nolint:mnd // NL decreases from 59 at the equator.
 		}
 	}
 
-	return 1
+	return 1 // |latitude| ≥ last boundary (87°): pole.
 }
