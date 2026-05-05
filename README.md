@@ -2,43 +2,87 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/hyperized/modes.svg)](https://pkg.go.dev/github.com/hyperized/modes)
 
-A pure-Go implementation of **ICAO Annex 10 Volume IV** (the Mode S transponder downlink protocol) and **RTCA DO-260B** (its ADS-B Extended Squitter overlay). Decodes validated Mode S frames into typed messages — aircraft identification, airborne and surface position via Compact Position Reporting (CPR), velocity, surveillance altitude / identity, ACAS coordination, and the Comm-A / Comm-B / Comm-D ELM channels.
+A pure-Go implementation of **ICAO Annex 10 Volume IV** (the Mode S transponder downlink protocol) and **RTCA DO-260B** (its ADS-B Extended Squitter overlay). Decodes validated Mode S frames into typed messages — aircraft identification, airborne and surface position via Compact Position Reporting (CPR), velocity, surveillance altitude / identity, ACAS coordination, Comm-A / Comm-B / Comm-D ELM channels.
 
 The package is spec-faithful, allocation-free on the hot path, and has zero third-party dependencies. It pairs naturally with [`github.com/hyperized/demod1090`](https://github.com/hyperized/demod1090) for the radio-to-bits side, but any source of validated `[]byte` Mode S frames works the same.
 
 ## Status
 
-Scaffolding only. Feature work lands commit-by-commit; see the git log for the iteration shape. The plan is full-spec coverage: every documented Downlink Format with its sub-formats and BDS register codes for Comm-B.
+Working coverage of every Downlink Format defined in the spec. The decoded surface is broad rather than deep — every DF and most ME Type Codes have a typed decoded message; the long tail of subtype-specific sub-decoders (TC 29 selected-altitude sub-decoding, TC 31 airborne / surface sub-fields, the dozen-plus Comm-B BDS registers beyond BDS 2,0) is being filled in commit-by-commit as downstream consumers need them. Real-frame regression vectors land alongside as captured ADS-B replay data becomes available.
 
-## Scope
+## Coverage
 
-- **Frame structure**: 5-bit DF dispatch, 7- vs 14-byte length classification, CRC-24 with the Mode S generator polynomial (0xFFF409), parity-overlay validation, single-bit error correction via syndrome lookup (the demod1090 primitive moves here as the natural home).
-- **DF 17 / 18 (Extended Squitter, ADS-B)**: ME field decoders for Type Codes 1–4 (callsign), 5–8 (surface position), 9–18 + 20–22 (airborne position), 19 (velocity), 23–31 (auxiliary).
-- **DF 4 / 5 (surveillance)**: Gillham-coded altitude, Mode-3/A squawk, capability + flight-status sub-fields.
-- **DF 11 (all-call reply)**: ICAO + capability code; the unsolicited (II=0) variant the radar uses for acquisition.
-- **DF 0 / 16 (ACAS air-to-air)**: short and long airborne collision-avoidance coordination.
-- **DF 20 / 21 (Comm-B)**: BDS register coverage — at minimum BDS 1,7 (capability), BDS 3,0 (ACAS resolution advisory), BDS 4,0 (selected vertical intention), BDS 5,0 (track + turn), BDS 6,0 (heading + speed), and the meteorological registers BDS 4,4 / 4,5.
-- **DF 24 (Comm-D ELM)**: 80-bit Extended Length Message reassembly across linked frames.
-- **CPR globally-unambiguous decoding**: standard pair-of-frames algorithm + locally-unambiguous fallback against a reference position.
+| Downlink Format | Decoder                              | Notes |
+|-----------------|--------------------------------------|-------|
+| DF 0            | `DecodeACASShortReply`               | Air-to-air ACAS short |
+| DF 4            | `DecodeSurveillanceAltitude`         | Altitude reply |
+| DF 5            | `DecodeSurveillanceIdentity`         | Identity / squawk reply |
+| DF 11           | `DecodeAllCallReply`                 | All-call reply (II 0..15) |
+| DF 16           | `DecodeACASLongReply`                | Air-to-air ACAS long, MV exposed raw |
+| DF 17 / 18      | `DecodeExtendedSquitter`             | ADS-B Extended Squitter; ME dispatched per TC |
+| DF 20 / 21      | `DecodeCommBAltitude` / `Identity`   | Comm-B; MB exposed raw |
+| DF 24..31       | `DecodeCommDExtendedLength`          | Comm-D ELM segment; reassembly is caller's job |
 
-## API shape (planned)
+ME Type Codes (DF 17 / 18):
+
+| TC range | Message               | Coverage |
+|----------|-----------------------|----------|
+| 1..4     | Aircraft Identification | full (callsign + emitter category set) |
+| 5..8     | Surface Position       | full structure (movement / heading / CPR); CPR resolution via `DecodeCPRGlobal` or `DecodeCPRLocal` |
+| 9..18    | Airborne Position (barometric) | full structure; CPR resolution via the same helpers |
+| 19       | Airborne Velocity      | subtype 1 (subsonic ground-speed) full; subtypes 2/3/4 surface structural fields only |
+| 20..22   | Airborne Position (GNSS) | structure; per-subtype altitude lands as a follow-up |
+| 28       | Aircraft Status        | subtype 1 (Emergency / Priority Status) full; subtype 2 (TCAS RA) raw |
+| 29       | Target State and Status | structural (subtype + raw) |
+| 31       | Aircraft Operational Status | structural (subtype + raw) |
+
+Helpers shared across the per-DF decoders:
+
+- `CRC24` / `AppendCRC24` / `CRCResidual` — Mode S CRC-24 (polynomial 0xFFF409).
+- `AltitudeFeet(altitudeCode uint16)` — 13-bit AC field decoder, Q=1 binary path (Q=0 Gillham is a follow-up).
+- `SquawkFromIdentityCode(identityCode uint16)` — Mode 3/A squawk decoder.
+- `DecodeCPRGlobal` / `DecodeCPRLocal` — Compact Position Reporting math, with the spec's NL lookup table.
+- `DecodeBDS20Callsign` — first BDS register decoder (Aircraft Identification), reused for callsign extraction from Comm-B replies.
+
+## Quickstart
 
 ```go
-// Frame is a validated Mode S downlink frame in wire order. Length
-// is either 7 (short) or 14 (long) bytes; CRC has been checked by
-// the producer (e.g. demod1090).
-type Frame []byte
+package main
 
-// Decoder dispatches a Frame to the appropriate per-DF parser and
-// returns a typed message. Reuse a Decoder across calls — its
-// CPR cache and ICAO ledger track per-aircraft state.
-type Decoder struct { /* ... */ }
+import (
+	"fmt"
 
-func New(opts ...Option) *Decoder
-func (d *Decoder) Decode(frame Frame) (Message, error)
+	"github.com/hyperized/modes"
+)
+
+func main() {
+	frame := modes.Frame{ /* 7 or 14 bytes from your demodulator */ }
+
+	switch frame.DF() {
+	case modes.DFExtendedSquitter, modes.DFNonTransponderES:
+		squitter, err := modes.DecodeExtendedSquitter(frame)
+		if err != nil {
+			fmt.Println("decode:", err)
+
+			return
+		}
+
+		switch msg := squitter.Message.(type) {
+		case modes.IdentificationMessage:
+			fmt.Printf("ICAO=%06X callsign=%s category=%c%d\n",
+				squitter.ICAO, msg.Callsign, msg.CategorySet, msg.EmitterCategory)
+		case modes.AirbornePositionMessage:
+			fmt.Printf("ICAO=%06X alt=%dft cpr=%v/%v\n",
+				squitter.ICAO, msg.AltitudeFeet, msg.CPR.Latitude, msg.CPR.Longitude)
+		case modes.AirborneVelocityMessage:
+			if msg.GroundSpeedAvailable {
+				fmt.Printf("ICAO=%06X gs=%.0fkt track=%.0f° vr=%dft/min\n",
+					squitter.ICAO, msg.GroundSpeedKnots, msg.TrackDegrees, msg.VerticalRateFeetMin)
+			}
+		}
+	}
+}
 ```
-
-`Message` is a sealed interface implemented by typed values per DF — `IdentificationMessage`, `AirbornePositionMessage`, `SurveillanceAltitudeMessage`, `CommBMessage`, etc. Callers type-switch.
 
 ## Build & test
 
@@ -54,6 +98,6 @@ Business Source License 1.1. See `LICENSE`. Free for non-commercial use; commerc
 
 ## References
 
-- **ICAO Annex 10 Vol IV** — paywalled; the dump1090 / readsb source comments and the [Mode S decoder primer at mode-s.org](https://mode-s.org/) (Junzi Sun's "ADS-B Decoding Guide", free PDF) are the practical references.
+- **ICAO Annex 10 Vol IV** — paywalled; the dump1090 / readsb source comments and [Junzi Sun's "ADS-B Decoding Guide"](https://mode-s.org/) (free PDF) are the practical references.
 - **RTCA DO-260B** — paywalled; same set of free references covers ADS-B specifics.
 - [`flightaware/dump1090`](https://github.com/flightaware/dump1090) and [`wiedehopf/readsb`](https://github.com/wiedehopf/readsb) — GPL-2 reference implementations. Read for understanding; do not copy.
