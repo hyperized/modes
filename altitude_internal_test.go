@@ -69,8 +69,8 @@ func TestAltitudeFeetMBitRejected(t *testing.T) {
 
 	const mBitMask uint16 = 1 << 6
 
-	if _, err := AltitudeFeet(mBitMask); !errors.Is(err, errAltitudeMSet) {
-		t.Errorf("err = %v, want errAltitudeMSet", err)
+	if _, err := AltitudeFeet(mBitMask); !errors.Is(err, ErrAltitudeMSet) {
+		t.Errorf("err = %v, want ErrAltitudeMSet", err)
 	}
 }
 
@@ -80,7 +80,7 @@ func TestAltitudeFeetGillhamReturnsPlaceholderError(t *testing.T) {
 	// M=0, Q=0: legacy Gillham. Until the follow-up implements
 	// the lookup machinery the decoder surfaces a clear sentinel
 	// rather than guessing.
-	if _, err := AltitudeFeet(0); !errors.Is(err, errGillhamUnsupported) {
-		t.Errorf("err = %v, want errGillhamUnsupported", err)
+	if _, err := AltitudeFeet(0); !errors.Is(err, ErrGillhamUnsupported) {
+		t.Errorf("err = %v, want ErrGillhamUnsupported", err)
 	}
 }

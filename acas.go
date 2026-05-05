@@ -151,12 +151,12 @@ func extractACASPrefix(frame Frame) acasPrefix {
 func DecodeACASShortReply(frame Frame, icao ICAO) (ACASShortReply, error) {
 	if got := frame.DF(); got != DFShortAirAir {
 		return ACASShortReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			errWrongDF, got, DFShortAirAir)
+			ErrWrongDF, got, DFShortAirAir)
 	}
 
 	if len(frame) != ShortFrameBytes {
 		return ACASShortReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 0",
-			errFrameTooShort, len(frame), ShortFrameBytes)
+			ErrFrameTooShort, len(frame), ShortFrameBytes)
 	}
 
 	prefix := extractACASPrefix(frame)
@@ -180,12 +180,12 @@ func DecodeACASShortReply(frame Frame, icao ICAO) (ACASShortReply, error) {
 func DecodeACASLongReply(frame Frame, icao ICAO) (ACASLongReply, error) {
 	if got := frame.DF(); got != DFLongAirAir {
 		return ACASLongReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			errWrongDF, got, DFLongAirAir)
+			ErrWrongDF, got, DFLongAirAir)
 	}
 
 	if len(frame) != LongFrameBytes {
 		return ACASLongReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 16",
-			errFrameTooShort, len(frame), LongFrameBytes)
+			ErrFrameTooShort, len(frame), LongFrameBytes)
 	}
 
 	prefix := extractACASPrefix(frame)

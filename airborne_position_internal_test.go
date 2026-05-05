@@ -94,7 +94,7 @@ func TestDecodeAirbornePositionGNSSReturnsAltitudeError(t *testing.T) {
 	t.Parallel()
 
 	// TC 20..22 carry GNSS altitude — the decoder surfaces
-	// errGNSSAltitudeUnsupported on the AltitudeError field
+	// ErrGNSSAltitudeUnsupported on the AltitudeError field
 	// while still populating the CPR / format structural data.
 	mePayload := makeAirbornePositionME(20, 35_000, CPRFormatEven, 0, 0)
 	frame := makeESFrame(DFExtendedSquitter, 0, 0x123456, mePayload)
@@ -109,8 +109,8 @@ func TestDecodeAirbornePositionGNSSReturnsAltitudeError(t *testing.T) {
 		t.Fatalf("Message is %T, want AirbornePositionMessage", squitter.Message)
 	}
 
-	if !errors.Is(pos.AltitudeError, errGNSSAltitudeUnsupported) {
-		t.Errorf("AltitudeError = %v, want errGNSSAltitudeUnsupported", pos.AltitudeError)
+	if !errors.Is(pos.AltitudeError, ErrGNSSAltitudeUnsupported) {
+		t.Errorf("AltitudeError = %v, want ErrGNSSAltitudeUnsupported", pos.AltitudeError)
 	}
 
 	if !pos.IsGNSSAltitude {
@@ -120,7 +120,7 @@ func TestDecodeAirbornePositionGNSSReturnsAltitudeError(t *testing.T) {
 
 // TestDecodeAirbornePositionAltitudeQ0Gillham hits the Q=0
 // branch — the modern decoder doesn't handle Gillham yet, so it
-// must surface errGillhamUnsupported on the altitude field.
+// must surface ErrGillhamUnsupported on the altitude field.
 func TestDecodeAirbornePositionAltitudeQ0Gillham(t *testing.T) {
 	t.Parallel()
 
@@ -145,8 +145,8 @@ func TestDecodeAirbornePositionAltitudeQ0Gillham(t *testing.T) {
 		t.Fatalf("Message is %T, want AirbornePositionMessage", squitter.Message)
 	}
 
-	if !errors.Is(pos.AltitudeError, errGillhamUnsupported) {
-		t.Errorf("AltitudeError = %v, want errGillhamUnsupported", pos.AltitudeError)
+	if !errors.Is(pos.AltitudeError, ErrGillhamUnsupported) {
+		t.Errorf("AltitudeError = %v, want ErrGillhamUnsupported", pos.AltitudeError)
 	}
 }
 

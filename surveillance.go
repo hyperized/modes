@@ -107,12 +107,12 @@ func extractSurveillanceHeader(frame Frame) surveillanceHeader {
 func DecodeSurveillanceAltitude(frame Frame, icao ICAO) (SurveillanceAltitude, error) {
 	if got := frame.DF(); got != DFSurveillanceAlt {
 		return SurveillanceAltitude{}, fmt.Errorf("%w: have DF %d, want %d",
-			errWrongDF, got, DFSurveillanceAlt)
+			ErrWrongDF, got, DFSurveillanceAlt)
 	}
 
 	if len(frame) != ShortFrameBytes {
 		return SurveillanceAltitude{}, fmt.Errorf("%w: have %d bytes, want %d for DF 4",
-			errFrameTooShort, len(frame), ShortFrameBytes)
+			ErrFrameTooShort, len(frame), ShortFrameBytes)
 	}
 
 	header := extractSurveillanceHeader(frame)
@@ -134,12 +134,12 @@ func DecodeSurveillanceAltitude(frame Frame, icao ICAO) (SurveillanceAltitude, e
 func DecodeSurveillanceIdentity(frame Frame, icao ICAO) (SurveillanceIdentity, error) {
 	if got := frame.DF(); got != DFSurveillanceID {
 		return SurveillanceIdentity{}, fmt.Errorf("%w: have DF %d, want %d",
-			errWrongDF, got, DFSurveillanceID)
+			ErrWrongDF, got, DFSurveillanceID)
 	}
 
 	if len(frame) != ShortFrameBytes {
 		return SurveillanceIdentity{}, fmt.Errorf("%w: have %d bytes, want %d for DF 5",
-			errFrameTooShort, len(frame), ShortFrameBytes)
+			ErrFrameTooShort, len(frame), ShortFrameBytes)
 	}
 
 	header := extractSurveillanceHeader(frame)

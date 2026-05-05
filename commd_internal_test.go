@@ -48,8 +48,8 @@ func TestDecodeCommDRejectsLowerDF(t *testing.T) {
 	frame := make(Frame, LongFrameBytes)
 	frame[0] = byte(DFExtendedSquitter << 3) // DF 17
 
-	if _, err := DecodeCommDExtendedLength(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeCommDExtendedLength(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -57,7 +57,7 @@ func TestDecodeCommDRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{0xC0}
-	if _, err := DecodeCommDExtendedLength(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeCommDExtendedLength(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }

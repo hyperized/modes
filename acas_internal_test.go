@@ -158,8 +158,8 @@ func TestDecodeACASShortReplyRejectsWrongDF(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFAllCallReply << 3), 0, 0, 0, 0, 0, 0}
-	if _, err := DecodeACASShortReply(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeACASShortReply(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -169,8 +169,8 @@ func TestDecodeACASLongReplyRejectsWrongDF(t *testing.T) {
 	frame := make(Frame, LongFrameBytes)
 	frame[0] = byte(DFExtendedSquitter << 3)
 
-	if _, err := DecodeACASLongReply(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeACASLongReply(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -178,8 +178,8 @@ func TestDecodeACASShortReplyRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFShortAirAir << 3)}
-	if _, err := DecodeACASShortReply(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeACASShortReply(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }
 
@@ -187,7 +187,7 @@ func TestDecodeACASLongReplyRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFLongAirAir << 3)}
-	if _, err := DecodeACASLongReply(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeACASLongReply(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }

@@ -66,12 +66,12 @@ type CommBIdentityReply struct {
 func DecodeCommBAltitude(frame Frame, icao ICAO) (CommBAltitudeReply, error) {
 	if got := frame.DF(); got != DFCommBAltitude {
 		return CommBAltitudeReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			errWrongDF, got, DFCommBAltitude)
+			ErrWrongDF, got, DFCommBAltitude)
 	}
 
 	if len(frame) != LongFrameBytes {
 		return CommBAltitudeReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 20",
-			errFrameTooShort, len(frame), LongFrameBytes)
+			ErrFrameTooShort, len(frame), LongFrameBytes)
 	}
 
 	header := extractSurveillanceHeader(frame)
@@ -97,12 +97,12 @@ func DecodeCommBAltitude(frame Frame, icao ICAO) (CommBAltitudeReply, error) {
 func DecodeCommBIdentity(frame Frame, icao ICAO) (CommBIdentityReply, error) {
 	if got := frame.DF(); got != DFCommBIdentity {
 		return CommBIdentityReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			errWrongDF, got, DFCommBIdentity)
+			ErrWrongDF, got, DFCommBIdentity)
 	}
 
 	if len(frame) != LongFrameBytes {
 		return CommBIdentityReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 21",
-			errFrameTooShort, len(frame), LongFrameBytes)
+			ErrFrameTooShort, len(frame), LongFrameBytes)
 	}
 
 	header := extractSurveillanceHeader(frame)

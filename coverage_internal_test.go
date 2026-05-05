@@ -23,8 +23,8 @@ func TestDecodeCommBIdentityRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFCommBIdentity << 3)}
-	if _, err := DecodeCommBIdentity(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeCommBIdentity(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }
 
@@ -34,8 +34,8 @@ func TestDecodeCommBIdentityRejectsWrongDF(t *testing.T) {
 	frame := make(Frame, LongFrameBytes)
 	frame[0] = byte(DFExtendedSquitter << 3)
 
-	if _, err := DecodeCommBIdentity(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeCommBIdentity(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -43,8 +43,8 @@ func TestDecodeCommBAltitudeRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFCommBAltitude << 3)}
-	if _, err := DecodeCommBAltitude(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeCommBAltitude(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }
 
@@ -53,8 +53,8 @@ func TestDecodeMEPayloadUnsupportedTC(t *testing.T) {
 
 	// TC 23 (test message) — no decoder yet.
 	mePayload := [7]byte{23 << 3, 0, 0, 0, 0, 0, 0}
-	if _, err := decodeMEPayload(23, mePayload[:]); !errors.Is(err, errUnsupportedTypeCode) {
-		t.Errorf("err = %v, want errUnsupportedTypeCode", err)
+	if _, err := decodeMEPayload(23, mePayload[:]); !errors.Is(err, ErrUnsupportedTypeCode) {
+		t.Errorf("err = %v, want ErrUnsupportedTypeCode", err)
 	}
 }
 
@@ -287,7 +287,7 @@ func TestDecodeVelocityWestboundSouthbound(t *testing.T) {
 
 // TestDecodeCPRGlobalNLMismatch synthesises a pair where
 // latitudeEven and latitudeOdd land in different NL zones —
-// errCPRZoneCrossing reachable only for genuinely incompatible
+// ErrCPRZoneCrossing reachable only for genuinely incompatible
 // CPR pairs.
 func TestDecodeCPRGlobalNLMismatch(t *testing.T) {
 	t.Parallel()
@@ -301,8 +301,8 @@ func TestDecodeCPRGlobalNLMismatch(t *testing.T) {
 	odd := CPRPosition{Latitude: 94491, Longitude: 0, Format: CPRFormatOdd}
 
 	_, _, err := DecodeCPRGlobal(even, odd, CPRFormatEven)
-	if !errors.Is(err, errCPRZoneCrossing) {
-		t.Errorf("err = %v, want errCPRZoneCrossing for NL-mismatch pair", err)
+	if !errors.Is(err, ErrCPRZoneCrossing) {
+		t.Errorf("err = %v, want ErrCPRZoneCrossing for NL-mismatch pair", err)
 	}
 }
 

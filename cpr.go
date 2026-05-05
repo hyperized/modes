@@ -51,11 +51,11 @@ type CPRPosition struct {
 	Format    CPRFormat
 }
 
-// errCPRZoneCrossing is returned by DecodeCPRGlobal when the
+// ErrCPRZoneCrossing is returned by DecodeCPRGlobal when the
 // even and odd frames disagree on the longitude-zone count
 // NL — meaning the aircraft crossed an NL boundary between
 // transmissions and the pair can't be combined cleanly.
-var errCPRZoneCrossing = errors.New("modes: CPR pair crosses NL boundary; need newer pair")
+var ErrCPRZoneCrossing = errors.New("modes: CPR pair crosses NL boundary; need newer pair")
 
 const (
 	// cprResolution is the 17-bit denominator the encoded CPR
@@ -84,7 +84,7 @@ func positiveMod(value, modulus float64) float64 {
 // mostRecent argument identifies which of the two arrived later;
 // the decoded position is the one that frame represents.
 //
-// Returns errCPRZoneCrossing when the even and odd frames are
+// Returns ErrCPRZoneCrossing when the even and odd frames are
 // computed against different NL values (the aircraft crossed an
 // NL boundary between transmissions). Callers should discard the
 // older frame and retry on the next pair.
@@ -96,7 +96,7 @@ func DecodeCPRGlobal(even, odd CPRPosition, mostRecent CPRFormat) (latitude, lon
 	}
 
 	if odd.Format != CPRFormatOdd {
-		return 0, 0, errCPRZoneCrossing
+		return 0, 0, ErrCPRZoneCrossing
 	}
 
 	latEven := float64(even.Latitude) / cprResolution
@@ -116,7 +116,7 @@ func DecodeCPRGlobal(even, odd CPRPosition, mostRecent CPRFormat) (latitude, lon
 	}
 
 	if cprNL(latitudeEven) != cprNL(latitudeOdd) {
-		return 0, 0, errCPRZoneCrossing
+		return 0, 0, ErrCPRZoneCrossing
 	}
 
 	switch mostRecent {
@@ -127,7 +127,7 @@ func DecodeCPRGlobal(even, odd CPRPosition, mostRecent CPRFormat) (latitude, lon
 		latitude = latitudeOdd
 		longitude = decodeLongitudeGlobal(even, odd, latitudeOdd, CPRFormatOdd)
 	default:
-		return 0, 0, errCPRZoneCrossing
+		return 0, 0, ErrCPRZoneCrossing
 	}
 
 	if longitude >= 180 { //nolint:mnd // wrap longitude to (-180, +180].

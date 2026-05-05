@@ -66,9 +66,9 @@ type AirbornePositionMessage struct {
 
 func (msg AirbornePositionMessage) isModesMessage() { _ = msg }
 
-// errGNSSAltitudeUnsupported marks TC 20..22 GNSS-altitude
+// ErrGNSSAltitudeUnsupported marks TC 20..22 GNSS-altitude
 // encodings the decoder doesn't yet split per subtype.
-var errGNSSAltitudeUnsupported = errors.New("modes: GNSS-altitude encoding (TC 20..22) not yet supported")
+var ErrGNSSAltitudeUnsupported = errors.New("modes: GNSS-altitude encoding (TC 20..22) not yet supported")
 
 // decodeAirbornePosition parses a TC 9..18 / 20..22 ME payload.
 // mePayload must be exactly 7 bytes.
@@ -136,14 +136,14 @@ func decodeAirbornePositionAltitude(mePayload []byte, isGNSS bool) (int, error) 
 	)
 
 	if isGNSS {
-		return 0, errGNSSAltitudeUnsupported
+		return 0, ErrGNSSAltitudeUnsupported
 	}
 
 	altCode := (uint16(mePayload[1])<<altByte1Shift |
 		uint16(mePayload[2]&altByte2Mask)>>altByte1Shift) & altMask
 
 	if altCode&qBitMask == 0 {
-		return 0, errGillhamUnsupported
+		return 0, ErrGillhamUnsupported
 	}
 
 	value := (altCode&topMask)>>topShift | (altCode & botMask)

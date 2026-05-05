@@ -57,13 +57,13 @@ type Message interface {
 	isModesMessage()
 }
 
-// errUnsupportedTypeCode is returned by DecodeExtendedSquitter
+// ErrUnsupportedTypeCode is returned by DecodeExtendedSquitter
 // when the ME field carries a Type Code we don't have a decoder
 // for yet. The caller still receives the structural ExtendedSquitter
 // (DF / CA / AA / TC populated) so it can log or count the
 // unhandled type without losing the broadcasting aircraft's
 // identity.
-var errUnsupportedTypeCode = errors.New("modes: type code not yet supported")
+var ErrUnsupportedTypeCode = errors.New("modes: type code not yet supported")
 
 // DecodeExtendedSquitter parses a DF 17 or DF 18 frame and
 // dispatches the ME payload to the per-Type-Code decoder. The
@@ -71,19 +71,19 @@ var errUnsupportedTypeCode = errors.New("modes: type code not yet supported")
 // populated; Message is non-nil iff the TC has a registered
 // decoder.
 //
-// Returns errWrongDF for non-DF-17/18 frames, errFrameTooShort
+// Returns ErrWrongDF for non-DF-17/18 frames, ErrFrameTooShort
 // for frames shorter than LongFrameBytes, and any per-TC decoder
-// error wrapped with errUnsupportedTypeCode for TCs without a
+// error wrapped with ErrUnsupportedTypeCode for TCs without a
 // registered decoder yet.
 func DecodeExtendedSquitter(frame Frame) (ExtendedSquitter, error) {
 	got := frame.DF()
 	if got != DFExtendedSquitter && got != DFNonTransponderES {
-		return ExtendedSquitter{}, fmt.Errorf("%w: have DF %d, want 17 or 18", errWrongDF, got)
+		return ExtendedSquitter{}, fmt.Errorf("%w: have DF %d, want 17 or 18", ErrWrongDF, got)
 	}
 
 	if len(frame) != LongFrameBytes {
 		return ExtendedSquitter{}, fmt.Errorf("%w: have %d bytes, want %d for DF %d",
-			errFrameTooShort, len(frame), LongFrameBytes, got)
+			ErrFrameTooShort, len(frame), LongFrameBytes, got)
 	}
 
 	const (
@@ -152,5 +152,5 @@ func decodeMEPayload(typeCode TypeCode, mePayload []byte) (Message, error) {
 		return decodeOperationalStatus(mePayload), nil
 	}
 
-	return nil, fmt.Errorf("%w: TC %d", errUnsupportedTypeCode, typeCode)
+	return nil, fmt.Errorf("%w: TC %d", ErrUnsupportedTypeCode, typeCode)
 }

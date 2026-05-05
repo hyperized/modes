@@ -63,8 +63,8 @@ func TestCPRGlobalRequiresOppositeFormats(t *testing.T) {
 	second := CPRPosition{Latitude: 88385, Longitude: 125818, Format: CPRFormatEven}
 
 	_, _, err := DecodeCPRGlobal(first, second, CPRFormatEven)
-	if !errors.Is(err, errCPRZoneCrossing) {
-		t.Errorf("err = %v, want errCPRZoneCrossing", err)
+	if !errors.Is(err, ErrCPRZoneCrossing) {
+		t.Errorf("err = %v, want ErrCPRZoneCrossing", err)
 	}
 }
 
@@ -157,8 +157,8 @@ func TestCPRGlobalUnknownFormatErrors(t *testing.T) {
 	even := encodeCPR(52.0, 4.0, CPRFormatEven)
 	odd := encodeCPR(52.0, 4.0, CPRFormatOdd)
 
-	if _, _, err := DecodeCPRGlobal(even, odd, CPRFormat(99)); !errors.Is(err, errCPRZoneCrossing) {
-		t.Errorf("err = %v, want errCPRZoneCrossing for unknown CPRFormat", err)
+	if _, _, err := DecodeCPRGlobal(even, odd, CPRFormat(99)); !errors.Is(err, ErrCPRZoneCrossing) {
+		t.Errorf("err = %v, want ErrCPRZoneCrossing for unknown CPRFormat", err)
 	}
 }
 

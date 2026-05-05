@@ -76,7 +76,7 @@ func TestDecodeSurveillanceAltitudeRoundTrip(t *testing.T) {
 func TestDecodeSurveillanceAltitudeFlagsAltitudeError(t *testing.T) {
 	t.Parallel()
 
-	// M=1 path: AltitudeFeet returns errAltitudeMSet but the
+	// M=1 path: AltitudeFeet returns ErrAltitudeMSet but the
 	// surveillance decode itself succeeds — the consumer can
 	// still see flight status / DR / UM even when altitude is
 	// not decodable.
@@ -89,8 +89,8 @@ func TestDecodeSurveillanceAltitudeFlagsAltitudeError(t *testing.T) {
 		t.Fatalf("DecodeSurveillanceAltitude: %v", err)
 	}
 
-	if !errors.Is(reply.AltitudeError, errAltitudeMSet) {
-		t.Errorf("AltitudeError = %v, want errAltitudeMSet", reply.AltitudeError)
+	if !errors.Is(reply.AltitudeError, ErrAltitudeMSet) {
+		t.Errorf("AltitudeError = %v, want ErrAltitudeMSet", reply.AltitudeError)
 	}
 }
 
@@ -124,8 +124,8 @@ func TestDecodeSurveillanceAltitudeRejectsWrongDF(t *testing.T) {
 	t.Parallel()
 
 	frame := makeSurveillanceFrame(DFSurveillanceID, 0, 0, 0, 0)
-	if _, err := DecodeSurveillanceAltitude(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeSurveillanceAltitude(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -133,8 +133,8 @@ func TestDecodeSurveillanceIdentityRejectsWrongDF(t *testing.T) {
 	t.Parallel()
 
 	frame := makeSurveillanceFrame(DFSurveillanceAlt, 0, 0, 0, 0)
-	if _, err := DecodeSurveillanceIdentity(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeSurveillanceIdentity(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -142,8 +142,8 @@ func TestDecodeSurveillanceAltitudeRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFSurveillanceAlt << 3)}
-	if _, err := DecodeSurveillanceAltitude(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeSurveillanceAltitude(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }
 
@@ -151,7 +151,7 @@ func TestDecodeSurveillanceIdentityRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFSurveillanceID << 3)}
-	if _, err := DecodeSurveillanceIdentity(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeSurveillanceIdentity(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }

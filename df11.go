@@ -63,30 +63,30 @@ type AllCallReply struct {
 	IsUnsolicited bool
 }
 
-// errFrameTooShort is the static sentinel for short-frame decode
+// ErrFrameTooShort is the static sentinel for short-frame decode
 // errors. err113 forbids ad-hoc errors.New from fmt.Errorf, so
 // individual DF decoders wrap this with %w.
-var errFrameTooShort = errors.New("modes: frame shorter than DF requires")
+var ErrFrameTooShort = errors.New("modes: frame shorter than DF requires")
 
-// errWrongDF is the static sentinel for "this decoder was handed
+// ErrWrongDF is the static sentinel for "this decoder was handed
 // a frame whose DF doesn't match what the decoder handles".
-var errWrongDF = errors.New("modes: wrong downlink format for decoder")
+var ErrWrongDF = errors.New("modes: wrong downlink format for decoder")
 
 // DecodeAllCallReply parses a DF 11 frame and returns the typed
 // reply. The interrogator field is derived from the CRC residual,
 // which the caller computed at validation time; pass it as
 // crcResidual.
 //
-// Returns errWrongDF if the frame's DF isn't 11, errFrameTooShort
+// Returns ErrWrongDF if the frame's DF isn't 11, ErrFrameTooShort
 // if the frame isn't ShortFrameBytes long.
 func DecodeAllCallReply(frame Frame, crcResidual uint32) (AllCallReply, error) {
 	if got := frame.DF(); got != DFAllCallReply {
-		return AllCallReply{}, fmt.Errorf("%w: have DF %d, want %d", errWrongDF, got, DFAllCallReply)
+		return AllCallReply{}, fmt.Errorf("%w: have DF %d, want %d", ErrWrongDF, got, DFAllCallReply)
 	}
 
 	if len(frame) != ShortFrameBytes {
 		return AllCallReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 11",
-			errFrameTooShort, len(frame), ShortFrameBytes)
+			ErrFrameTooShort, len(frame), ShortFrameBytes)
 	}
 
 	const (

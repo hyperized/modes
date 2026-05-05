@@ -82,8 +82,8 @@ func TestDecodeAllCallReplyRejectsWrongDF(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{0x8D, 0, 0, 0, 0, 0, 0} // DF 17, short length
-	if _, err := DecodeAllCallReply(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeAllCallReply(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -93,7 +93,7 @@ func TestDecodeAllCallReplyRejectsWrongLength(t *testing.T) {
 	const dfShift = 3
 
 	frame := Frame{byte(DFAllCallReply << dfShift)}
-	if _, err := DecodeAllCallReply(frame, 0); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeAllCallReply(frame, 0); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }

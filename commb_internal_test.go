@@ -95,8 +95,8 @@ func TestDecodeCommBAltitudeRejectsWrongDF(t *testing.T) {
 	frame := make(Frame, LongFrameBytes)
 	frame[0] = byte(DFExtendedSquitter << 3)
 
-	if _, err := DecodeCommBAltitude(frame, 0); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeCommBAltitude(frame, 0); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 

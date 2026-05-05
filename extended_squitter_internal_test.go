@@ -162,8 +162,8 @@ func TestDecodeExtendedSquitterUnsupportedTC(t *testing.T) {
 	frame := makeESFrame(DFExtendedSquitter, 0, 0x123456, mePayload)
 
 	squitter, err := DecodeExtendedSquitter(frame)
-	if !errors.Is(err, errUnsupportedTypeCode) {
-		t.Errorf("err = %v, want errUnsupportedTypeCode", err)
+	if !errors.Is(err, ErrUnsupportedTypeCode) {
+		t.Errorf("err = %v, want ErrUnsupportedTypeCode", err)
 	}
 
 	if squitter.ICAO != 0x123456 {
@@ -182,8 +182,8 @@ func TestDecodeExtendedSquitterRejectsWrongDF(t *testing.T) {
 	frame := make(Frame, LongFrameBytes)
 	frame[0] = byte(DFLongAirAir << 3)
 
-	if _, err := DecodeExtendedSquitter(frame); !errors.Is(err, errWrongDF) {
-		t.Errorf("err = %v, want errWrongDF", err)
+	if _, err := DecodeExtendedSquitter(frame); !errors.Is(err, ErrWrongDF) {
+		t.Errorf("err = %v, want ErrWrongDF", err)
 	}
 }
 
@@ -191,8 +191,8 @@ func TestDecodeExtendedSquitterRejectsShortFrame(t *testing.T) {
 	t.Parallel()
 
 	frame := Frame{byte(DFExtendedSquitter << 3)}
-	if _, err := DecodeExtendedSquitter(frame); !errors.Is(err, errFrameTooShort) {
-		t.Errorf("err = %v, want errFrameTooShort", err)
+	if _, err := DecodeExtendedSquitter(frame); !errors.Is(err, ErrFrameTooShort) {
+		t.Errorf("err = %v, want ErrFrameTooShort", err)
 	}
 }
 

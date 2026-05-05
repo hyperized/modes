@@ -52,12 +52,12 @@ type CommDMessage struct {
 func DecodeCommDExtendedLength(frame Frame, icao ICAO) (CommDMessage, error) {
 	if got := frame.DF(); got < DFCommDExtendedLength {
 		return CommDMessage{}, fmt.Errorf("%w: have DF %d, want 24..31",
-			errWrongDF, got)
+			ErrWrongDF, got)
 	}
 
 	if len(frame) != LongFrameBytes {
 		return CommDMessage{}, fmt.Errorf("%w: have %d bytes, want %d for DF 24",
-			errFrameTooShort, len(frame), LongFrameBytes)
+			ErrFrameTooShort, len(frame), LongFrameBytes)
 	}
 
 	const (
