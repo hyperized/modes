@@ -149,14 +149,17 @@ func extractACASPrefix(frame Frame) acasPrefix {
 // DecodeACASShortReply parses a DF 0 frame. icao is the addressed
 // aircraft's ICAO recovered from the parity residual.
 func DecodeACASShortReply(frame Frame, icao ICAO) (ACASShortReply, error) {
-	if got := frame.DF(); got != DFShortAirAir {
-		return ACASShortReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			ErrWrongDF, got, DFShortAirAir)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice, so
+	// surfacing ErrFrameTooShort for the empty case keeps the
+	// public Decode* surface panic-free for arbitrary input.
 	if len(frame) != ShortFrameBytes {
 		return ACASShortReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 0",
 			ErrFrameTooShort, len(frame), ShortFrameBytes)
+	}
+
+	if got := frame.DF(); got != DFShortAirAir {
+		return ACASShortReply{}, fmt.Errorf("%w: have DF %d, want %d",
+			ErrWrongDF, got, DFShortAirAir)
 	}
 
 	prefix := extractACASPrefix(frame)
@@ -178,14 +181,15 @@ func DecodeACASShortReply(frame Frame, icao ICAO) (ACASShortReply, error) {
 // DecodeACASShortReply; the MV field is exposed verbatim as a
 // 7-byte payload.
 func DecodeACASLongReply(frame Frame, icao ICAO) (ACASLongReply, error) {
-	if got := frame.DF(); got != DFLongAirAir {
-		return ACASLongReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			ErrWrongDF, got, DFLongAirAir)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice.
 	if len(frame) != LongFrameBytes {
 		return ACASLongReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 16",
 			ErrFrameTooShort, len(frame), LongFrameBytes)
+	}
+
+	if got := frame.DF(); got != DFLongAirAir {
+		return ACASLongReply{}, fmt.Errorf("%w: have DF %d, want %d",
+			ErrWrongDF, got, DFLongAirAir)
 	}
 
 	prefix := extractACASPrefix(frame)

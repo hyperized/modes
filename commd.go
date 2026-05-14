@@ -50,14 +50,15 @@ type CommDMessage struct {
 // the addressed aircraft's ICAO recovered from the parity
 // residual.
 func DecodeCommDExtendedLength(frame Frame, icao ICAO) (CommDMessage, error) {
-	if got := frame.DF(); got < DFCommDExtendedLength {
-		return CommDMessage{}, fmt.Errorf("%w: have DF %d, want 24..31",
-			ErrWrongDF, got)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice.
 	if len(frame) != LongFrameBytes {
 		return CommDMessage{}, fmt.Errorf("%w: have %d bytes, want %d for DF 24",
 			ErrFrameTooShort, len(frame), LongFrameBytes)
+	}
+
+	if got := frame.DF(); got < DFCommDExtendedLength {
+		return CommDMessage{}, fmt.Errorf("%w: have DF %d, want 24..31",
+			ErrWrongDF, got)
 	}
 
 	const (

@@ -1,6 +1,10 @@
 ---
 version: '2'
 
+run:
+  # Pin the language floor so staticcheck / gopls match go.mod.
+  go: '1.26'
+
 linters:
   default: all
   disable:

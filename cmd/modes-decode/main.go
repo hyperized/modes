@@ -89,11 +89,72 @@ func parseConfig(args []string, stderr io.Writer) (config, error) {
 		"CRC residual to supply when decoding overlay-DF frames "+
 			"(DF 0/4/5/11/16/20/21). Hex or decimal. Producer-side context.")
 
+	flagSet.Usage = func() { writeUsage(stderr, flagSet) }
+
 	if err := flagSet.Parse(args); err != nil {
 		return cfg, fmt.Errorf("flag parse: %w", err)
 	}
 
 	return cfg, nil
+}
+
+// writeUsage prints the operator-facing help text. Documents the
+// stdin format, stdout / stderr contracts, exit codes, and the
+// caveat on --crc-residual so `modes-decode -h` is the canonical
+// reference for someone wiring this into a pipeline.
+func writeUsage(out io.Writer, flagSet *flag.FlagSet) {
+	const usage = `modes-decode — decode hex Mode S / ADS-B frames from stdin.
+
+INPUT
+  Reads one hex frame per line from stdin. Lowercase or uppercase
+  accepted; an optional ` + "`0x`" + ` prefix is stripped. Lines
+  starting with ` + "`#`" + ` and blank lines are skipped. A
+  trailing ` + "`!errors=N`" + ` marker (as emitted by demod1090
+  when a frame was rescued via single-bit error correction) is
+  parsed off and echoed onto the matching output line.
+
+OUTPUT
+  Each decoded frame produces one line on stdout, e.g.
+
+      4840D6 df=17 tc=4 ident callsign=KLM1023 set=A category=0
+      40621D df=4 surv-alt alt=38000ft fs=0
+
+  Decoding errors are reported on stderr, one per offending line,
+  prefixed with ` + "`modes-decode: line \"<hex>\":`" + `. A final
+  stderr summary line of the form
+
+      modes-decode: decoded=<N> errors=<N>
+
+  is always emitted so a wrapping shell can count outcomes.
+
+EXIT CODES
+  0  clean shutdown (per-line decode errors do NOT cause non-zero
+     exit — they are reported on stderr and counted).
+  1  scanner / IO failure on stdin.
+  2  bad CLI flag.
+
+CAVEAT — --crc-residual
+  Mode S DFs 0/4/5/11/16/20/21 overlay parity with the addressed
+  aircraft's ICAO (24 bits). The receiver recovers the ICAO from
+  the CRC residual at validation time; the downstream decoder
+  cannot. ` + "`--crc-residual`" + ` is the only way to pass that
+  context to modes-decode.
+
+  Because the flag is global, it applies to EVERY frame in the
+  stream. That is only meaningful when the input is a single
+  ICAO's traffic. For mixed-ICAO streams, accept the ICAO=0
+  default (the decoded structural fields are still correct) or
+  pre-split the input by ICAO before piping in.
+
+  DF 17 / DF 18 carry the broadcasting AA in the message body
+  and never need this flag.
+
+FLAGS
+`
+
+	_, _ = fmt.Fprint(out, usage)
+
+	flagSet.PrintDefaults()
 }
 
 // run is the real entry point — main() just calls os.Exit(run(...))
@@ -253,6 +314,11 @@ func formatES(frame modes.Frame) string {
 
 	base := fmt.Sprintf("%06X df=%d tc=%d", uint32(squitter.ICAO), squitter.DF, squitter.TypeCode)
 
+	// modes.Message is a sealed interface (unexported isModesMessage
+	// marker). Every concrete satisfier is covered below; the panic
+	// after the switch is structurally unreachable and exists so
+	// that adding a new Message variant without a case here surfaces
+	// loudly the first time a frame of that type is decoded.
 	switch msg := squitter.Message.(type) {
 	case modes.IdentificationMessage:
 		return fmt.Sprintf("%s ident callsign=%s set=%c category=%d",
@@ -274,9 +340,9 @@ func formatES(frame modes.Frame) string {
 		return fmt.Sprintf("%s targetstate subtype=%d", base, msg.Subtype)
 	case modes.OperationalStatusMessage:
 		return fmt.Sprintf("%s opstatus subtype=%d", base, msg.Subtype)
+	default:
+		panic(fmt.Sprintf("modes-decode: unhandled Message variant %T — formatES needs a new switch arm", msg))
 	}
-
-	return base
 }
 
 // altitudeFmt renders an altitude value with a sentinel for the

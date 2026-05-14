@@ -2,21 +2,18 @@ package modes
 
 import "math"
 
-// cprNL returns the number of longitude zones at the given
-// latitude per ICAO Annex 10 Vol IV §3.1.2.9.4.6 / DO-260B
-// table A-21. NL is 59 at the equator and decreases monotonically
-// to 1 near the poles; the function is symmetric about latitude 0.
+// nlBoundaries is the 58-entry table of "transition latitudes"
+// the spec mandates for the CPR NL function — ICAO Annex 10
+// Vol IV §3.1.2.9.4.6 / DO-260B table A-21. The breakpoint
+// nlBoundaries[i] is the latitude at which NL drops from i+2 to
+// i+1 (so for latitude < nlBoundaries[0], NL = 59).
 //
-// Two implementations exist: a closed-form involving inverse
-// cosine, and a 59-entry lookup table of latitude breakpoints.
-// The lookup is what every reference implementation uses (it's
-// what the spec mandates as the "transition latitudes" table)
-// and the closed form has a documented numerical-stability
-// gotcha at the boundaries. Lookup wins on both correctness and
-// speed.
-//
-// The breakpoint nlBoundaries[i] is the latitude at which NL
-// drops from i+2 to i+1 (so for latitude < nlBoundaries[0], NL = 59).
+// Two implementations of NL exist: a closed-form involving
+// inverse cosine, and this 58-entry lookup. The lookup is what
+// every reference implementation uses (it's what the spec
+// mandates as the "transition latitudes" table) and the closed
+// form has a documented numerical-stability gotcha at the
+// boundaries. Lookup wins on both correctness and speed.
 //
 //nolint:gochecknoglobals // immutable lookup table; init once.
 var nlBoundaries = [...]float64{

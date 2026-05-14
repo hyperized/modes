@@ -59,7 +59,7 @@ type SurfacePositionMessage struct {
 	CPR      CPRPosition
 }
 
-func (msg SurfacePositionMessage) isModesMessage() { _ = msg }
+func (SurfacePositionMessage) isModesMessage() {}
 
 // decodeSurfacePosition parses a TC 5..8 ME payload.
 // mePayload must be exactly 7 bytes.

@@ -29,12 +29,19 @@ import "fmt"
 // that identifies the register from MB-field patterns. This
 // package exposes the raw MB so callers can do either.
 //
-// Two register-specific decoders ship today: BDS 2,0 (callsign)
-// because it round-trips the Mode S 6-bit alphabet identically
-// to the TC 1..4 ADS-B path, and BDS 3,0 (ACAS RA) because it's
-// the safety-critical one. Other registers are exposed only as
-// raw MB bytes for now — the per-register sub-decoders land as
-// downstream consumers actually need them.
+// Only BDS 2,0 (callsign) ships with a register-specific decoder
+// today, because it round-trips the Mode S 6-bit alphabet
+// identically to the TC 1..4 ADS-B path. Other registers (BDS
+// 3,0 ACAS RA included) are exposed only as raw MB bytes — the
+// per-register sub-decoders land as downstream consumers
+// actually need them.
+
+// mbOffset is the byte offset of the 7-byte MB (Comm-B message)
+// field inside a 14-byte DF 20 / DF 21 frame: 4 bytes of header
+// (DF + FS/DR/UM + AC/ID) then the 7-byte MB then the 3-byte AP.
+// Shared by both Comm-B decoders so the offset has one source of
+// truth.
+const mbOffset = 4
 
 // CommBAltitudeReply is the decoded form of a DF 20 frame:
 // the surveillance-altitude header (FS / DR / UM / altitude)
@@ -64,20 +71,19 @@ type CommBIdentityReply struct {
 // DecodeCommBAltitude parses a DF 20 frame. icao is the addressed
 // aircraft's ICAO recovered from the parity residual.
 func DecodeCommBAltitude(frame Frame, icao ICAO) (CommBAltitudeReply, error) {
-	if got := frame.DF(); got != DFCommBAltitude {
-		return CommBAltitudeReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			ErrWrongDF, got, DFCommBAltitude)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice.
 	if len(frame) != LongFrameBytes {
 		return CommBAltitudeReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 20",
 			ErrFrameTooShort, len(frame), LongFrameBytes)
 	}
 
+	if got := frame.DF(); got != DFCommBAltitude {
+		return CommBAltitudeReply{}, fmt.Errorf("%w: have DF %d, want %d",
+			ErrWrongDF, got, DFCommBAltitude)
+	}
+
 	header := extractSurveillanceHeader(frame)
 	altitude, err := AltitudeFeet(header.payload13)
-
-	const mbOffset = 4
 
 	var commBPayload [7]byte
 	copy(commBPayload[:], frame[mbOffset:mbOffset+7])
@@ -95,19 +101,18 @@ func DecodeCommBAltitude(frame Frame, icao ICAO) (CommBAltitudeReply, error) {
 
 // DecodeCommBIdentity parses a DF 21 frame.
 func DecodeCommBIdentity(frame Frame, icao ICAO) (CommBIdentityReply, error) {
-	if got := frame.DF(); got != DFCommBIdentity {
-		return CommBIdentityReply{}, fmt.Errorf("%w: have DF %d, want %d",
-			ErrWrongDF, got, DFCommBIdentity)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice.
 	if len(frame) != LongFrameBytes {
 		return CommBIdentityReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 21",
 			ErrFrameTooShort, len(frame), LongFrameBytes)
 	}
 
-	header := extractSurveillanceHeader(frame)
+	if got := frame.DF(); got != DFCommBIdentity {
+		return CommBIdentityReply{}, fmt.Errorf("%w: have DF %d, want %d",
+			ErrWrongDF, got, DFCommBIdentity)
+	}
 
-	const mbOffset = 4
+	header := extractSurveillanceHeader(frame)
 
 	var commBPayload [7]byte
 	copy(commBPayload[:], frame[mbOffset:mbOffset+7])

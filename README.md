@@ -32,7 +32,7 @@ ME Type Codes (DF 17 / 18):
 | 1..4     | Aircraft Identification       | full (callsign + emitter category set) |
 | 5..8     | Surface Position              | full structure (movement / heading / CPR); resolve CPR via `DecodeCPRGlobal` or `DecodeCPRLocal` |
 | 9..18    | Airborne Position (barometric)| full structure; same CPR resolution helpers |
-| 19       | Airborne Velocity             | subtype 1 (subsonic ground-speed) full; subtypes 2/3/4 surface structural fields only |
+| 19       | Airborne Velocity             | subtypes 1 (subsonic ground-speed) and 2 (supersonic ground-speed, ×4 multiplier) full; subtypes 3/4 (airspeed) structural fields only |
 | 20..22   | Airborne Position (GNSS)      | structure; per-subtype altitude lands as a follow-up |
 | 28       | Aircraft Status               | subtype 1 (Emergency / Priority Status) full; subtype 2 (TCAS RA) raw |
 | 29       | Target State and Status       | structural (subtype + raw) |
@@ -126,6 +126,37 @@ Static sentinels for every recoverable failure mode; branch with `errors.Is`:
 | `ErrAltitudeMSet`                 | 13-bit altitude field has M=1 (metric encoding); spec leaves the value to-be-defined. |
 | `ErrGillhamUnsupported`           | Q=0 Gillham/Gray-coded altitude path; lookup table lands as a follow-up. |
 | `ErrGNSSAltitudeUnsupported`      | TC 20..22 GNSS-altitude per-subtype decoding lands as a follow-up. |
+
+## CLI — `modes-decode`
+
+A small reference binary that pipes one hex frame per line through the library and prints one decoded line per frame. Designed to compose with `demod1090` output.
+
+```sh
+go install github.com/hyperized/modes/cmd/modes-decode@latest
+
+demod1090 | modes-decode
+# or replay a capture:
+rtl-probe -capture cap.iq && demod1090 -replay-iq cap.iq | modes-decode
+```
+
+Input lines are case-insensitive hex with an optional `0x` prefix; blank lines and lines starting with `#` are skipped. Decoding errors go to stderr along with a final `modes-decode: decoded=N errors=N` summary so a wrapping shell can count outcomes. Decoded frames go to stdout, e.g.
+
+```
+4840D6 df=17 tc=4 ident callsign=KLM1023 set=A category=0
+40621D df=4 surv-alt alt=38000ft fs=0
+```
+
+Exit codes:
+
+| Code | Meaning |
+|------|---------|
+| 0    | Clean shutdown. Per-line decode failures count on stderr but don't change the exit. |
+| 1    | Scanner / IO failure on stdin. |
+| 2    | Bad CLI flag. |
+
+**Caveat — `--crc-residual`.** Mode S DFs 0/4/5/11/16/20/21 overlay parity with the addressed aircraft's ICAO; the receiver recovers it from the CRC residual at validation time. `--crc-residual` is the only way to pass that context to `modes-decode`, but the flag is global and applies to every frame in the stream. It's only meaningful when the input carries a single ICAO's traffic; for mixed-ICAO streams, accept the ICAO=0 default (the rest of the decoded fields are still correct) or pre-split the input by ICAO. DF 17 / DF 18 carry the broadcasting AA in the message body and never need this flag.
+
+Run `modes-decode -h` for the full reference.
 
 ## Build & test
 

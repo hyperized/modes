@@ -105,14 +105,15 @@ func extractSurveillanceHeader(frame Frame) surveillanceHeader {
 // the addressee's ICAO so the receiver has no way to learn it
 // from the message body alone.
 func DecodeSurveillanceAltitude(frame Frame, icao ICAO) (SurveillanceAltitude, error) {
-	if got := frame.DF(); got != DFSurveillanceAlt {
-		return SurveillanceAltitude{}, fmt.Errorf("%w: have DF %d, want %d",
-			ErrWrongDF, got, DFSurveillanceAlt)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice.
 	if len(frame) != ShortFrameBytes {
 		return SurveillanceAltitude{}, fmt.Errorf("%w: have %d bytes, want %d for DF 4",
 			ErrFrameTooShort, len(frame), ShortFrameBytes)
+	}
+
+	if got := frame.DF(); got != DFSurveillanceAlt {
+		return SurveillanceAltitude{}, fmt.Errorf("%w: have DF %d, want %d",
+			ErrWrongDF, got, DFSurveillanceAlt)
 	}
 
 	header := extractSurveillanceHeader(frame)
@@ -132,14 +133,15 @@ func DecodeSurveillanceAltitude(frame Frame, icao ICAO) (SurveillanceAltitude, e
 // DecodeSurveillanceIdentity parses a DF 5 frame. Same icao
 // contract as DecodeSurveillanceAltitude.
 func DecodeSurveillanceIdentity(frame Frame, icao ICAO) (SurveillanceIdentity, error) {
-	if got := frame.DF(); got != DFSurveillanceID {
-		return SurveillanceIdentity{}, fmt.Errorf("%w: have DF %d, want %d",
-			ErrWrongDF, got, DFSurveillanceID)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice.
 	if len(frame) != ShortFrameBytes {
 		return SurveillanceIdentity{}, fmt.Errorf("%w: have %d bytes, want %d for DF 5",
 			ErrFrameTooShort, len(frame), ShortFrameBytes)
+	}
+
+	if got := frame.DF(); got != DFSurveillanceID {
+		return SurveillanceIdentity{}, fmt.Errorf("%w: have DF %d, want %d",
+			ErrWrongDF, got, DFSurveillanceID)
 	}
 
 	header := extractSurveillanceHeader(frame)

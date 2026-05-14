@@ -22,6 +22,17 @@ import "errors"
 //	bit 12 11 10  9  8  7  6  5  4  3  2  1  0
 //	    C1 A1 C2 A2 C4 A4  M B1  Q B2 D2 B4 D4
 
+// Altitude-encoding scale factors. The 25-ft step and -1000 ft
+// offset apply to every Mode S binary-altitude encoding: the
+// 13-bit AC field in DF 0/4/16/20 (this file, AltitudeFeet) and
+// the 12-bit airborne-position altitude field in DF 17 / DF 18
+// TC 9..18 (airborne_position.go). Spec reference: ICAO Annex 10
+// Vol IV §3.1.2.6.5.4 and DO-260B §A.1.4.3.
+const (
+	altitudeStepFeet   = 25    // 25-ft quantisation per N count.
+	altitudeOffsetFeet = -1000 // baseline at N=0.
+)
+
 // ErrAltitudeMSet is the static sentinel for the metric-altitude
 // path (M = 1) — uncommon enough that we surface it as an error
 // rather than guess at a value the spec leaves "to be defined"
@@ -51,9 +62,6 @@ func AltitudeFeet(altitudeCode uint16) (int, error) {
 
 		mBitMask uint16 = 1 << mBitPos
 		qBitMask uint16 = 1 << qBitPos
-
-		altitudeMultiplier = 25
-		altitudeOffset     = -1000
 	)
 
 	if altitudeCode&mBitMask != 0 {
@@ -80,7 +88,7 @@ func AltitudeFeet(altitudeCode uint16) (int, error) {
 		uint(altitudeCode>>5)&1<<middleBitNShift | //nolint:mnd // B1 sits at bit 5; one-bit extract.
 		uint(altitudeCode)&bottomMask
 
-	return int(value)*altitudeMultiplier + altitudeOffset, nil
+	return int(value)*altitudeStepFeet + altitudeOffsetFeet, nil
 }
 
 // decodeGillhamAltitude is the legacy 100-ft Gray-coded path.

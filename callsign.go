@@ -61,7 +61,7 @@ type IdentificationMessage struct {
 	Callsign string
 }
 
-func (msg IdentificationMessage) isModesMessage() { _ = msg }
+func (IdentificationMessage) isModesMessage() {}
 
 // modesAlphabet is the 64-entry lookup the ME callsign characters
 // decode against. Built once so the per-character path is a

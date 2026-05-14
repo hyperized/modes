@@ -76,14 +76,17 @@ var ErrUnsupportedTypeCode = errors.New("modes: type code not yet supported")
 // error wrapped with ErrUnsupportedTypeCode for TCs without a
 // registered decoder yet.
 func DecodeExtendedSquitter(frame Frame) (ExtendedSquitter, error) {
+	// Length-check first: Frame.DF() panics on an empty slice, so
+	// surfacing ErrFrameTooShort for the empty case keeps the
+	// public Decode* surface panic-free for arbitrary input.
+	if len(frame) != LongFrameBytes {
+		return ExtendedSquitter{}, fmt.Errorf("%w: have %d bytes, want %d for ES",
+			ErrFrameTooShort, len(frame), LongFrameBytes)
+	}
+
 	got := frame.DF()
 	if got != DFExtendedSquitter && got != DFNonTransponderES {
 		return ExtendedSquitter{}, fmt.Errorf("%w: have DF %d, want 17 or 18", ErrWrongDF, got)
-	}
-
-	if len(frame) != LongFrameBytes {
-		return ExtendedSquitter{}, fmt.Errorf("%w: have %d bytes, want %d for DF %d",
-			ErrFrameTooShort, len(frame), LongFrameBytes, got)
 	}
 
 	const (

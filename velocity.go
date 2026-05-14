@@ -2,21 +2,28 @@ package modes
 
 import "math"
 
-// Airborne Velocity (TC 19, subtype 1)
-// ====================================
+// Airborne Velocity (TC 19, subtypes 1..4)
+// ========================================
 //
 // ICAO Annex 10 Vol IV §3.1.2.9.5 / DO-260B §2.2.3.2.6. The ADS-B
 // velocity message has four sub-formats keyed off a 3-bit Subtype
-// field; this commit decodes the most common one — Subtype 1,
-// Ground Speed, normal subsonic range — and surfaces the
-// supersonic / airspeed paths as errVelocitySubtypeUnsupported
-// for follow-up commits to fill in once a real-frame test vector
-// is in hand.
+// field:
 //
-// Wire layout for Subtype 1 (ME bit positions 0..55, MSB-first):
+//	1  Ground Speed, normal subsonic — full decode
+//	2  Ground Speed, supersonic      — full decode (×4 multiplier)
+//	3  Airspeed,     normal subsonic — structural only
+//	4  Airspeed,     supersonic      — structural only
+//
+// Subtypes 1 and 2 share the same wire layout for the velocity
+// fields; subtype 2 just scales the raw v-1 counts by ×4 per
+// §3.1.2.9.5.2. The airspeed subtypes (3 / 4) repurpose the
+// East-West / North-South fields as Mach / heading and are left
+// structural-only until a real-frame fixture is in hand.
+//
+// Wire layout for Subtypes 1 / 2 (ME bit positions 0..55, MSB-first):
 //
 //	bit  0..4   TC (5 = 19)
-//	bit  5..7   Subtype (3 bits, value 1 here)
+//	bit  5..7   Subtype (3 bits, value 1 or 2)
 //	bit  8      Intent Change Flag (IC)
 //	bit  9      IFR Capability Flag
 //	bit 10..12  Navigation Uncertainty Category (NUCv)
@@ -53,12 +60,13 @@ const (
 )
 
 // AirborneVelocityMessage is the decoded payload of an ADS-B
-// velocity message (TC 19). Only Subtype 1 (ground-speed
-// subsonic) is fully populated today; the airspeed subtypes 3/4
-// surface the Subtype field with the rest of the velocity values
-// at zero (and Available flags false) so consumers can detect
-// the "we know it's velocity but the variant isn't decoded yet"
-// state without crashing.
+// velocity message (TC 19). Subtypes 1 (ground-speed subsonic)
+// and 2 (ground-speed supersonic, ×4 multiplier) are fully
+// populated; the airspeed subtypes 3 / 4 surface the Subtype
+// field with the rest of the velocity values at zero (and the
+// Available flags false) so consumers can detect the "we know
+// it's velocity but the variant isn't decoded yet" state
+// without crashing.
 type AirborneVelocityMessage struct {
 	Subtype               VelocitySubtype
 	IntentChange          bool
@@ -77,14 +85,15 @@ type AirborneVelocityMessage struct {
 	GNSSMinusBaroAvailable bool
 }
 
-func (msg AirborneVelocityMessage) isModesMessage() { _ = msg }
+func (AirborneVelocityMessage) isModesMessage() {}
 
 // decodeVelocity parses a TC 19 ME payload. mePayload must be 7
-// bytes (the ES dispatcher enforces that). For Subtype 1 the
-// returned message has full ground-speed + track + vertical-rate
-// values; for the other subtypes only the structural fields
-// (Subtype, IC, IFR, NUCv) are populated until the per-subtype
-// follow-up lands.
+// bytes (the ES dispatcher enforces that). For Subtypes 1 and 2
+// the returned message has full ground-speed + track + vertical-
+// rate values (subtype 2 applies the ×4 supersonic multiplier per
+// §3.1.2.9.5.2); for the airspeed subtypes 3 and 4 only the
+// structural fields (Subtype, IC, IFR, NUCv) are populated until
+// the per-subtype follow-up lands.
 func decodeVelocity(mePayload []byte) AirborneVelocityMessage {
 	const (
 		subtypeMask byte = 0x07

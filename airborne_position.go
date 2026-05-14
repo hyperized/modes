@@ -64,7 +64,7 @@ type AirbornePositionMessage struct {
 	IsGNSSAltitude bool
 }
 
-func (msg AirbornePositionMessage) isModesMessage() { _ = msg }
+func (AirbornePositionMessage) isModesMessage() {}
 
 // ErrGNSSAltitudeUnsupported marks TC 20..22 GNSS-altitude
 // encodings the decoder doesn't yet split per subtype.
@@ -126,9 +126,7 @@ func decodeAirbornePositionAltitude(mePayload []byte, isGNSS bool) (int, error) 
 		altByte2Mask  byte   = 0xF0
 		altMask       uint16 = 0x0FFF
 
-		qBitMask      uint16 = 1 << 4
-		altMultiplier        = 25
-		altOffset            = -1000
+		qBitMask uint16 = 1 << 4
 
 		topMask  uint16 = 0xFE0
 		topShift uint   = 1
@@ -148,7 +146,9 @@ func decodeAirbornePositionAltitude(mePayload []byte, isGNSS bool) (int, error) 
 
 	value := (altCode&topMask)>>topShift | (altCode & botMask)
 
-	return int(value)*altMultiplier + altOffset, nil
+	// altitudeStepFeet / altitudeOffsetFeet are defined in
+	// altitude.go (the canonical home for Mode S altitude encoding).
+	return int(value)*altitudeStepFeet + altitudeOffsetFeet, nil
 }
 
 //nolint:revive // formatBit names the wire-format flag, not a control toggle.

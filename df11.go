@@ -80,13 +80,17 @@ var ErrWrongDF = errors.New("modes: wrong downlink format for decoder")
 // Returns ErrWrongDF if the frame's DF isn't 11, ErrFrameTooShort
 // if the frame isn't ShortFrameBytes long.
 func DecodeAllCallReply(frame Frame, crcResidual uint32) (AllCallReply, error) {
-	if got := frame.DF(); got != DFAllCallReply {
-		return AllCallReply{}, fmt.Errorf("%w: have DF %d, want %d", ErrWrongDF, got, DFAllCallReply)
-	}
-
+	// Length-check first: Frame.DF() panics on an empty slice
+	// (documented contract that callers pass non-empty bytes), so
+	// surfacing ErrFrameTooShort for the empty case keeps the
+	// public Decode* surface panic-free for arbitrary input.
 	if len(frame) != ShortFrameBytes {
 		return AllCallReply{}, fmt.Errorf("%w: have %d bytes, want %d for DF 11",
 			ErrFrameTooShort, len(frame), ShortFrameBytes)
+	}
+
+	if got := frame.DF(); got != DFAllCallReply {
+		return AllCallReply{}, fmt.Errorf("%w: have DF %d, want %d", ErrWrongDF, got, DFAllCallReply)
 	}
 
 	const (
