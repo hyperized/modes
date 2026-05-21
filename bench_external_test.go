@@ -12,6 +12,8 @@ import (
 // reference frame fixtures); the short DFs are synthesised with
 // payloads picked to exercise their decoders without depending on
 // CRC validity (decoders gate on DF + length only).
+//
+//nolint:gochecknoglobals // bench fixtures; hoisted so each bench iteration starts without a hex-decode setup cost.
 var (
 	benchExtendedSquitter = modes.Frame{
 		0x8D, 0x48, 0x40, 0xD6, 0x20, 0x2C, 0xC3,
